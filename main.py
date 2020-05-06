@@ -1,5 +1,6 @@
 import datasets
 from gan.gan import GAN
+from generator import Generator
 
 
 def train():
@@ -10,5 +11,14 @@ def train():
     gan.train()
 
 
+def generate():
+    path = 'gan'
+    generator = Generator(path=path, num=25)
+    # generator.save_plot(row=5, col=5)
+    # generator.save_fake()
+    generator.interpolate()
+
+
 if __name__ == '__main__':
-    train()
+    # train()
+    generate()
