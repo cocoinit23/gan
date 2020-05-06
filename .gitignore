@@ -1,0 +1,16 @@
+*/*/*.png
+*/*/*.jpg
+*/*/*.h5
+*/*/*.gif
+*/*.png
+*/*.jpg
+*/*.h5
+*/*.gif
+*.png
+*.jpg
+*.h5
+*.gif
+
+.DS_Store
+.idea
+__pycache__
