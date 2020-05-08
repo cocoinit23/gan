@@ -7,13 +7,16 @@ from tensorflow.keras.layers import Dense, Flatten, LeakyReLU, BatchNormalizatio
 from tensorflow.keras.optimizers import Adam
 
 
-class GAN:
-    def __init__(self, dataset, path, epochs=30000, batch=256, save_interval=1000):
-        np.random.seed(0)
+class GAN(object):
+    def __init__(self, dataset, epochs=30000, batch=256, save_interval=1000):
         self.dataset = dataset
-        self.path = path
+        self.path = 'results/gan'
 
-        self.img_shape = dataset.shape[1], dataset.shape[2], dataset.shape[3]
+        self.img_shape = (dataset.shape[1], dataset.shape[2], dataset.shape[3])
+        print("Dataset shape:", dataset.shape)
+        assert self.img_shape[0] % 4 == 0 or self.img_shape[1] % 4 == 0, "Input shape must be a multiple of 4."
+        assert self.img_shape[2] == 1 or self.img_shape[2] == 3, "Input channels must be 1 or 3."
+
         self.latent_dim = 100
 
         self.epochs = epochs
@@ -58,7 +61,7 @@ class GAN:
         return x, y
 
     def build_discriminator(self):
-        model = Sequential(name='Discriminator')
+        model = Sequential(name='GAN_Discriminator')
         model.add(Flatten(input_shape=self.img_shape))
         model.add(Dense(512))
         model.add(LeakyReLU())
@@ -71,7 +74,7 @@ class GAN:
         return model
 
     def build_generator(self):
-        model = Sequential(name='Generator')
+        model = Sequential(name='GAN_Generator')
         model.add(Dense(256, input_shape=(self.latent_dim,)))
         model.add(LeakyReLU())
         model.add(BatchNormalization())
@@ -105,7 +108,10 @@ class GAN:
         for i in range(row * col):
             plt.subplot(row, col, i + 1)
             img = fake_img[i]
-            plt.imshow(img[:, :, 0], cmap='gray')
+            if self.img_shape[2] == 1:
+                plt.imshow(img[:, :, 0], cmap='gray')
+            else:
+                plt.imshow(img)
             plt.axis('off')
 
         save_name = os.path.join(self.path, 'progress/%05d.png' % epoch)
@@ -114,7 +120,7 @@ class GAN:
 
     def train(self):
         g_loss_min = 10 ** 10
-        for epoch in tqdm(range(self.epochs + 1)):
+        for epoch in tqdm(range(self.epochs)):
             x_real, y_real = self.real_samples()
             d_loss_real = self.discriminator.train_on_batch(x_real, y_real)
 

@@ -6,12 +6,12 @@ from PIL import Image
 
 
 class Generator:
-    def __init__(self, path, latent_dim=100, num=25):
+    def __init__(self, gan_name, latent_dim=100, num=100):
         self.latent_dim = latent_dim
         self.num = num
-        self.path = path
+        self.gan_name = gan_name
 
-        self.model = os.path.join(self.path, 'model/best.h5')
+        self.model = os.path.join(self.gan_name, 'model/best.h5')
         self.generator = load_model(self.model)
 
         self.z = self.latent_vector()
@@ -23,48 +23,40 @@ class Generator:
 
         return latent
 
-    def save_plot(self, row, col):
+    def save_plot(self, row=10, col=10):
         for i in range(row * col):
             plt.subplot(row, col, i + 1)
             plt.imshow(self.fake_img[i, :, :, 0], cmap='gray')
             plt.axis('off')
 
         # plt.show()
-        save_name = os.path.join(self.path, 'fake/plot.jpg')
+        save_name = os.path.join(self.gan_name, 'fake/plot.jpg')
         plt.savefig(save_name)
 
     def save_fake(self):
         for i in range(self.num):
-            save_name = os.path.join(self.path, 'fake/%04d.jpg' % (i + 1))
+            save_name = os.path.join(self.gan_name, 'fake/%04d.jpg' % (i + 1))
             img = np.clip(self.fake_img[i] * 255, 0, 255).squeeze()
             img = Image.fromarray(img.astype(np.uint8))
             img.save(save_name)
 
-    def interpolate(self):
-        z = self.latent_vector()
-        steps = 20
+    def interpolate(self, steps=20):
         ratio = np.linspace(0, 1, steps)
 
-        morph = []
-        for i in range(len(z)):
+        interpolate = []
+        for i in range(len(self.z)):
             for r in ratio:
-                v = r * z[i] + (1 - r) * z[i - 1]
-                morph.append(v)
+                v = r * self.z[i] + (1 - r) * self.z[i - 1]
+                interpolate.append(v)
 
-        morph_img = self.generator.predict(np.asarray(morph))
+        interpolate_img = self.generator.predict(np.asarray(interpolate))
 
         gif = []
-        for idx in range(len(morph_img)):
-            img = np.clip(morph_img[idx] * 255, 0, 255).squeeze()
+        for idx in range(len(interpolate_img)):
+            img = np.clip(interpolate_img[idx] * 255, 0, 255).squeeze()
             gif.append(Image.fromarray(img.astype(np.uint8)))
 
-        save_name = os.path.join(self.path, 'fake/morphing.gif')
-        gif[0].save(save_name, save_all=True, append_images=gif[1:], loop=1)
+        save_name = os.path.join(self.gan_name, 'fake/interpolate.gif')
+        gif[0].save(save_name, save_all=True, append_images=gif[1:], loop=0)
 
-
-if __name__ == '__main__':
-    path = 'gan'
-    generator = Generator(path=path, num=25)
-    # generator.save_plot(row=5, col=5)
-    # generator.save_fake()
-    generator.interpolate()
+        return gif
